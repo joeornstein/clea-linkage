@@ -26,5 +26,5 @@ iso <- read_csv(
 )
 
 
-# save cleaned data to tmp/
-save(clea, iso, file = here('_data', 'tmp', 'cleaned.RData'))
+# save cleaned data to temp/
+save(clea, iso, file = here('_data', 'temp', 'cleaned.RData'))

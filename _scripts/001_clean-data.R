@@ -23,7 +23,8 @@ clea <- clea_lc_20251015 |>
 iso <- read_csv(
   here('_data', 'raw', 'ISO.csv'),
   locale = locale(encoding = "latin1")
-)
+) |> 
+  rename(cst_n = Subdivision.name)
 
 
 # save cleaned data to temp/

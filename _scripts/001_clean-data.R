@@ -14,7 +14,8 @@ load(here(
 clea <- clea_lc_20251015 |> 
   filter(yr >= 1945) |> 
   select(release, id, rg, ctr_n, ctr, yr, mn, sub, cst_n, cst) |> 
-  unique()
+  unique() |> 
+  mutate()
 
 # TODO: clean cst_n so that it can handle odd edge cases like Bolivia, where the name is split between two 
 

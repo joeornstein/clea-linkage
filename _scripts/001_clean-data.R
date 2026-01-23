@@ -4,6 +4,7 @@
 
 library(tidyverse)
 library(here)
+library(glue)
 
 ## CLEA -----
 
@@ -13,19 +14,23 @@ load(here(
 
 clea <- clea_lc_20251015 |> 
   filter(yr >= 1945) |> 
-  select(release, id, rg, ctr_n, ctr, yr, mn, sub, cst_n, cst) |> 
+  select(release, id, rg, ctr_n, ctr, yr, mn, sub, cst_n) |> 
   unique() |> 
-  mutate()
-
-# TODO: clean cst_n so that it can handle odd edge cases like Bolivia, where the name is split between two 
-
+  # create cleaned version of consituency name,
+  # for edge cases (e.g. Bolivia) where 
+  # name is split between sub and cst_n fields
+  mutate(constituency = case_when(
+    str_detect(sub, '-9') ~ cst_n, # no subdivision
+    str_detect(str_to_upper(cst_n), str_to_upper(sub)) ~ cst_n, # subdivision name contained in cst_n
+    TRUE ~ glue('{sub} - {cst_n}')))
+    
 ## ISO codes -----
 
 iso <- read_csv(
   here('_data', 'raw', 'ISO.csv'),
   locale = locale(encoding = "latin1")
 ) |> 
-  rename(cst_n = Subdivision.name)
+  mutate(constituency = Subdivision.name)
 
 
 # save cleaned data to temp/

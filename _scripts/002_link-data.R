@@ -1,5 +1,5 @@
 #' ---
-#' Merge CLEA and ISO datasets with fuzzylink()
+#' Merge CLEA and ISO datasets using fuzzylink()
 #' ---
 
 library(tidyverse)
@@ -26,7 +26,7 @@ for(country in unique(clea$ctr_n)){
   
   ## fuzzylink
   df <- fuzzylink(A, B, 
-                  by = 'cst_n',
+                  by = 'constituency',
                   blocking.variables = 'ctr_n',
                   record_type = 'geographic area',
                   model = 'gpt-5.2',
@@ -37,11 +37,9 @@ for(country in unique(clea$ctr_n)){
   df <- df |> 
     group_by(A, id) |> 
     mutate(flag = as.numeric(n() > 1)) |> 
-    ungroup()
+    ungroup() |> 
+    mutate(flag = if_else(is.na(B) | match_probability < 0.2, 1, flag))
   
   save(df, file = here('_data', 'output', glue('{country}.RData')))
   
 }
-
-
-## TODO: flag duplicate matches

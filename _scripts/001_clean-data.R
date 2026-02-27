@@ -29,7 +29,13 @@ clea <- clea_lc_20251015 |>
 iso <- read_csv(
   here('_data', 'raw', 'ISO.csv'),
   locale = locale(encoding = "latin1")
-) |> 
+) |>
+  # ISO provides multiple language variants per subdivision for 58 countries.
+  # Keep one row per code, preferring English; fall back to the first available row.
+  group_by(ISO3166_2.code) |>
+  arrange(desc(Language.code == "en"), .by_group = TRUE) |>
+  slice(1) |>
+  ungroup() |>
   mutate(constituency = Subdivision.name)
 
 

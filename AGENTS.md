@@ -1,3 +1,4 @@
+
 # clea-linkage Project Memory
 
 ## Project Goal
@@ -24,6 +25,7 @@ _scripts/002_link-data.R                # Fuzzy linkage script
 **ISO.csv**: `ctr_n`, `Subdivision.category`, `ISO3166_2.code`, `star`, `Subdivision.name`, `Local.variant`, `Language.code`, `Romanization.system`, `Parent.subdivision`, `Country_code`, `Constituent_code`
 - 6,285 records; read with `encoding = "latin1"`
 - `constituency` field derived from `Subdivision.name`
+- ISO provides multiple language variants per subdivision for 58 countries; script 001 deduplicates by `ISO3166_2.code`, preferring `Language.code == "en"`, falling back to the first available row
 
 **Output per country (`df`)**: linked records with match probabilities and flags
 - `flag = 1` if multiple matches; flagged if match probability < 0.2
@@ -37,13 +39,10 @@ _scripts/002_link-data.R                # Fuzzy linkage script
 
 ## Current Status (as of 2026-02-27)
 
-- Script 001 completed (`cleaned.RData` exists)
-- Script 002 partially run; completed countries: **Brazil**, **Canada**, **United States**
+- Script 001 completed (`cleaned.RData` exists, regenerated with ISO deduplication fix)
+- Script 002 partially run; completed countries: **Brazil**, **United States**
+- **Canada** needs to be reprocessed (old output predates the ISO deduplication fix; delete or set `recompute <- TRUE`)
 - Remaining countries not yet linked
-
-## Known Issues / TODOs
-
-- Language code handling for Canada needs attention (TODO comment in script 002, line ~47)
 
 ## Required R Packages
 

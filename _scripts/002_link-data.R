@@ -43,5 +43,3 @@ for(country in unique(clea$ctr_n)){
   save(df, file = here('_data', 'output', glue('{country}.RData')))
   
 }
-
-# TODO: language codes in Canada!!

@@ -33,7 +33,7 @@ _scripts/003_validate.R                 # Post-merge validation and flagged-row 
 - `flag = 1` if multiple matches, no match (`B` is NA), or match probability < 0.2
 - Note: countries processed before the ISO deduplication fix (pre-2026-02-27) may have `ctr_n` as a plain column; Canada (processed after the fix) has `ctr_n.x`/`ctr_n.y` — script 003 normalises this
 
-**validated** (`_data/temp/validated.RData`): all per-country outputs combined, with a `label` and `notes` column added to flagged rows
+**validated** (`_data/temp/validated.RData`): all per-country outputs combined, with `label` and `notes` columns added to flagged rows
 - Labels: `clea_sub_error`, `clea_name_abbrev`, `clea_data_error`, `historical_territory`, `multi_territory`, `low_confidence`
 - Unlabelled flagged rows (`label = NA`) indicate countries not yet reviewed in `case_labels`
 
@@ -45,17 +45,19 @@ _scripts/003_validate.R                 # Post-merge validation and flagged-row 
    - Call `link_countries(unique(clea$ctr_n))` to process all; skips existing output unless `overwrite = TRUE`
    - Uses `fuzzylink()` with `model = "gpt-5.2"`
 3. Run `_scripts/003_validate.R` → produces `_data/temp/validated.RData`
+   - Loads `cleaned.RData` (for `iso` object used in ISO field correction)
    - Loads and combines all per-country output files
-   - Joins `case_labels` lookup table (keyed on `ctr_n` + `str_to_lower(cst_n)`) onto flagged rows
-   - Prints a summary and lists any unlabelled flagged rows
+   - Joins `case_labels` lookup table (keyed on `ctr_n` + `str_to_lower(cst_n)`) onto all rows
+   - Corrects ISO fields for any row where `case_labels` supplies a `true_iso_code` — this
+     overwrites fuzzylink's match even when `B` is non-missing (e.g. `clea_sub_error` rows)
+   - Prints a summary and lists any unlabeled flagged rows
    - Extend `case_labels` as new countries are processed
 
-## Current Status (as of 2026-02-27)
+## Current Status (as of 2026-02-28)
 
 - Script 001 completed (`cleaned.RData` exists, regenerated with ISO deduplication fix)
-- Script 002 partially run; completed countries: **Brazil**, **United States**, **Canada**
-- Script 003 run; all 69 flagged rows across the three processed countries are labelled
-- Remaining countries not yet linked
+- Script 002 partially run; completed countries: **Brazil**, **United States**, **Canada**, **Australia**, **Germany**
+- Script 003 run; Brazil, United States, and Canada are fully labelled; Australia (203 flagged rows) and Germany (132 flagged rows) not yet reviewed in `case_labels`
 
 ## Known Data Quality Issues
 

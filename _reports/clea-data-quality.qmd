@@ -1,0 +1,383 @@
+
+---
+title: "CLEA Data Quality: Identified Data Entry Issues"
+subtitle: "Five-country review — Brazil, Canada, Germany, Australia (partial), United States"
+date: "2026-02-28"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    number-sections: true
+    code-fold: true
+    theme: cosmo
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+::: {.callout-note}
+This report was generated using AI under general human direction. The contents were reviewed and validated by Joe Ornstein on Feburary 28, 2026.
+:::
+
+```{r}
+#| label: setup
+#| code-summary: "Load packages and data"
+
+library(tidyverse)
+library(here)
+library(knitr)
+
+load(here("_data", "temp", "validated.RData"))
+```
+
+## Introduction
+
+This report documents data entry problems identified in the Constituency-Level Elections Archive (CLEA) during a fuzzy-linkage project that assigns ISO 3166-2 subdivision codes to CLEA constituencies. The linkage was performed for five countries using the `fuzzylink` package; post-merge validation of every flagged observation then surfaced the issues described below.
+
+The issues are grouped into three categories:
+
+- **Sub field errors** (`clea_sub_error`): constituencies assigned to the wrong province, state, or territory in CLEA's `sub` field.
+- **Constituency name errors** (`clea_data_error`, `clea_name_abbrev`): typographical errors or systematic abbreviations that prevented correct matching.
+- **Historical / structural gaps** (`historical_territory`, `multi_territory`): territories that no longer exist as ISO subdivisions, or ridings that span more than one subdivision.
+
+```{r}
+#| label: summary-counts
+
+error_labels <- c("clea_sub_error", "clea_data_error",
+                  "clea_name_abbrev", "historical_territory", "multi_territory")
+
+issues <- validated |>
+  filter(label %in% error_labels) |>
+  distinct(ctr_n, cst_n, label)
+
+n_countries <- issues |> distinct(ctr_n) |> nrow()
+n_total     <- nrow(issues)
+```
+
+In total, **`{r} n_total` distinct constituency-level issues** were identified across **`{r} n_countries` countries**.
+
+## Summary
+
+```{r}
+#| label: tbl-summary
+#| tbl-cap: "Distinct constituency-level issues by country and category"
+
+label_order <- c("clea_sub_error", "clea_data_error",
+                 "clea_name_abbrev", "historical_territory", "multi_territory")
+
+label_labels <- c(
+  clea_sub_error       = "Sub field error",
+  clea_data_error      = "Name typo / data error",
+  clea_name_abbrev     = "Abbreviated name",
+  historical_territory = "Historical territory",
+  multi_territory      = "Multi-territory riding"
+)
+
+validated |>
+  filter(label %in% error_labels) |>
+  distinct(ctr_n, cst_n, label) |>
+  mutate(label = factor(label_labels[label], levels = label_labels)) |>
+  count(ctr_n, label) |>
+  pivot_wider(names_from = label, values_from = n, values_fill = 0L) |>
+  rename(Country = ctr_n) |>
+  arrange(Country) |>
+  kable()
+```
+
+The sections below describe each category in detail.
+
+---
+
+## Sub Field Errors {#sec-sub-errors}
+
+The `sub` field in CLEA records the province, state, or territory that a constituency belongs to. In several cases this field contains the wrong value, causing the linkage model to search in the wrong subdivision.
+
+### Germany: Systematic 2002–2005 East German Misassignment {#sec-germany-sub}
+
+The most substantial data quality problem found in this review is a systematic misassignment of East German *Wahlkreise* to the wrong *Bundesland* in the 2002 and 2005 Bundestag elections. The error is **entirely absent** from all other election years in the dataset (1990, 1994, 1998, 2009, 2013, 2021).
+
+```{r}
+#| label: tbl-germany-years
+#| tbl-cap: "East German constituency rows with wrong vs. correct sub field, by year"
+
+east_states <- c("sachsen", "sachsen-anhalt", "thüringen",
+                 "brandenburg", "mecklenburg-vorpommern")
+
+validated |>
+  filter(ctr_n == "Germany", label == "clea_sub_error",
+         ISO3166_2.code != "DE-BY") |>
+  mutate(
+    sub_lower = str_to_lower(sub),
+    sub_matches_iso = case_when(
+      sub_lower == "sachsen"                & ISO3166_2.code == "DE-SN" ~ TRUE,
+      sub_lower == "sachsen-anhalt"          & ISO3166_2.code == "DE-ST" ~ TRUE,
+      sub_lower == "mecklenburg-vorpommern"  & ISO3166_2.code == "DE-MV" ~ TRUE,
+      sub_lower == "brandenburg"             & ISO3166_2.code == "DE-BB" ~ TRUE,
+      sub_lower == "thüringen"               & ISO3166_2.code == "DE-TH" ~ TRUE,
+      TRUE ~ FALSE
+    )
+  ) |>
+  count(yr, sub_matches_iso) |>
+  mutate(Status = if_else(sub_matches_iso, "Sub correct (label inherited)", "Sub wrong (rotation error)")) |>
+  select(Year = yr, Status, n) |>
+  pivot_wider(names_from = Status, values_from = n, values_fill = 0L) |>
+  arrange(Year) |>
+  kable()
+```
+
+#### The misassignment pattern
+
+The five affected East German states were misassigned according to two independent permutations:
+
+```{r}
+#| label: tbl-rotation
+#| tbl-cap: "Sub field rotation pattern in 2002 and 2005"
+
+iso_names <- c(
+  "DE-BB" = "Brandenburg",
+  "DE-MV" = "Mecklenburg-Vorpommern",
+  "DE-SN" = "Sachsen",
+  "DE-ST" = "Sachsen-Anhalt",
+  "DE-TH" = "Thüringen"
+)
+
+validated |>
+  filter(ctr_n == "Germany", label == "clea_sub_error",
+         yr == 2002, ISO3166_2.code != "DE-BY",
+         str_to_lower(sub) %in% east_states) |>
+  distinct(sub, ISO3166_2.code) |>
+  mutate(
+    correct_state = iso_names[ISO3166_2.code],
+    pattern = case_when(
+      (sub == "Brandenburg"           & ISO3166_2.code == "DE-MV") |
+      (sub == "Mecklenburg-Vorpommern"& ISO3166_2.code == "DE-BB") ~ "2-way swap",
+      TRUE ~ "3-way cyclic rotation"
+    )
+  ) |>
+  arrange(pattern, sub) |>
+  transmute(
+    `CLEA sub (wrong)`  = sub,
+    `Correct state`     = correct_state,
+    `Pattern`           = pattern
+  ) |>
+  kable()
+```
+
+The 2-way **swap** (Brandenburg ↔ Mecklenburg-Vorpommern) and the 3-way **cyclic rotation** (Sachsen → Sachsen-Anhalt → Thüringen → Sachsen, where each state's constituencies were coded as the *next* state alphabetically) are the signature of a misaligned lookup table in the underlying CLEA release — not a scattered data entry mistake. No West German state is affected.
+
+::: {.callout-important}
+The rotation pattern means that Sachsen constituencies appear in CLEA under `sub = Sachsen-Anhalt`, Sachsen-Anhalt constituencies appear under `sub = Thüringen`, and Thüringen constituencies appear under `sub = Sachsen`. This is the opposite direction from what one might expect when "correcting" by shifting forward in the alphabetical sort.
+:::
+
+```{r}
+#| label: tbl-germany-counts
+#| tbl-cap: "Number of affected constituencies per state per election"
+
+validated |>
+  filter(ctr_n == "Germany", label == "clea_sub_error",
+         yr %in% c(2002, 2005), ISO3166_2.code != "DE-BY",
+         str_to_lower(sub) %in% east_states) |>
+  mutate(correct_state = iso_names[ISO3166_2.code]) |>
+  distinct(yr, cst_n, correct_state) |>
+  count(yr, correct_state) |>
+  pivot_wider(names_from = yr, values_from = n, values_fill = 0L) |>
+  arrange(correct_state) |>
+  rename(`True state` = correct_state) |>
+  kable()
+```
+
+#### Silently miscoded constituencies
+
+Six constituencies were miscoded by the same rotation but **did not trigger a flag** from `fuzzylink`, because the wrong state name embedded in the match string caused the model to match with high (>0.97) probability. These were identified through manual review of the year-by-year sub pattern.
+
+```{r}
+#| label: tbl-silent
+#| tbl-cap: "Constituencies miscoded with high model confidence (not flagged)"
+
+validated |>
+  filter(ctr_n == "Germany", label == "clea_sub_error", flag == 0,
+         yr %in% c(2002, 2005),
+         str_to_lower(sub) %in% c("sachsen-anhalt", "thüringen")) |>
+  mutate(correct_state = iso_names[ISO3166_2.code]) |>
+  distinct(cst_n, sub, correct_state) |>
+  arrange(sub, cst_n) |>
+  transmute(
+    `Constituency (cst_n)` = cst_n,
+    `CLEA sub (wrong)`     = sub,
+    `Correct state`        = correct_state
+  ) |>
+  kable()
+```
+
+All six have been corrected in the validated dataset via `true_iso_code`.
+
+#### Full list of affected constituencies
+
+```{r}
+#| label: tbl-germany-full
+#| tbl-cap: "All East German constituencies affected by the 2002/2005 rotation error"
+
+iso_names_full <- c(
+  "DE-BB" = "Brandenburg (DE-BB)",
+  "DE-MV" = "Mecklenburg-Vorpommern (DE-MV)",
+  "DE-SN" = "Sachsen (DE-SN)",
+  "DE-ST" = "Sachsen-Anhalt (DE-ST)",
+  "DE-TH" = "Thüringen (DE-TH)"
+)
+
+validated |>
+  filter(ctr_n == "Germany", label == "clea_sub_error",
+         yr %in% c(2002, 2005),
+         str_to_lower(sub) %in% east_states,
+         !(str_to_lower(sub) == str_to_lower(iso_names[ISO3166_2.code]))) |>
+  distinct(cst_n, sub, ISO3166_2.code) |>
+  mutate(correct = iso_names_full[ISO3166_2.code]) |>
+  arrange(ISO3166_2.code, cst_n) |>
+  transmute(
+    `Constituency`       = cst_n,
+    `CLEA sub (wrong)`   = sub,
+    `Correct state`      = correct
+  ) |>
+  kable()
+```
+
+#### Other Germany sub errors
+
+One additional sub error exists outside the 2002/2005 elections: the constituency **München-Süd** in 1976 has `sub = München-Süd` (the constituency name itself) rather than a valid state name. In all other years this constituency is correctly coded `sub = Bayern`. The ISO code DE-BY applies in all years.
+
+---
+
+### Canada: Provincial Misassignment {#sec-canada-sub}
+
+Four Canadian ridings are assigned to the wrong province in the CLEA `sub` field.
+
+```{r}
+#| label: tbl-canada-sub
+#| tbl-cap: "Canadian ridings with incorrect sub field"
+
+validated |>
+  filter(ctr_n == "Canada", label == "clea_sub_error") |>
+  distinct(cst_n, sub, notes) |>
+  arrange(cst_n) |>
+  transmute(
+    `Riding`         = cst_n,
+    `CLEA sub (wrong)` = sub,
+    `Notes`          = notes
+  ) |>
+  kable()
+```
+
+---
+
+## Constituency Name Errors {#sec-name-errors}
+
+### Typographical errors — United States {#sec-us-typos}
+
+Two US congressional districts contain typographical errors in the constituency name field that prevented reliable matching.
+
+```{r}
+#| label: tbl-us-typos
+#| tbl-cap: "US constituencies with typographical errors in cst_n"
+
+validated |>
+  filter(ctr_n == "United States", label == "clea_data_error") |>
+  distinct(cst_n, notes) |>
+  transmute(
+    `cst_n in CLEA` = cst_n,
+    `Notes`         = notes
+  ) |>
+  kable()
+```
+
+### Abbreviated state names — Brazil {#sec-brazil-abbrev}
+
+Four Brazilian states appear in the CLEA constituency name field with non-standard abbreviations rather than their full Portuguese names. This prevented the linkage model from reliably matching them to ISO subdivisions.
+
+```{r}
+#| label: tbl-brazil-abbrev
+#| tbl-cap: "Brazilian constituencies with abbreviated state names"
+
+validated |>
+  filter(ctr_n == "Brazil", label == "clea_name_abbrev") |>
+  distinct(cst_n, notes) |>
+  arrange(cst_n) |>
+  transmute(
+    `cst_n in CLEA` = cst_n,
+    `Notes`         = notes
+  ) |>
+  kable()
+```
+
+---
+
+## Historical and Structural Gaps {#sec-historical}
+
+These cases are not data entry errors in the conventional sense, but they reflect situations where no single current ISO 3166-2 code is applicable. They are documented here for transparency and to guide downstream decisions about how to handle them in analysis.
+
+### Historical territories — Brazil {#sec-brazil-hist}
+
+Several Brazilian constituencies correspond to territories or states that have since been abolished, merged, or renamed. They have no direct mapping to a current ISO subdivision.
+
+```{r}
+#| label: tbl-brazil-hist
+#| tbl-cap: "Brazilian constituencies corresponding to defunct territories or states"
+
+validated |>
+  filter(ctr_n == "Brazil", label == "historical_territory") |>
+  distinct(cst_n, notes) |>
+  arrange(cst_n) |>
+  transmute(
+    `cst_n in CLEA` = cst_n,
+    `Notes`         = notes
+  ) |>
+  kable()
+```
+
+### Multi-territory ridings — Canada {#sec-canada-multi}
+
+Two Canadian ridings span or ambiguously overlap more than one ISO subdivision. No single code can be assigned without additional modelling decisions.
+
+```{r}
+#| label: tbl-canada-multi
+#| tbl-cap: "Canadian ridings spanning multiple territories"
+
+validated |>
+  filter(ctr_n == "Canada", label == "multi_territory") |>
+  distinct(cst_n, notes) |>
+  transmute(
+    `Riding` = cst_n,
+    `Notes`  = notes
+  ) |>
+  kable()
+```
+
+---
+
+## Appendix: All Flagged Issues {#sec-appendix}
+
+Complete listing of every distinct constituency-level issue identified, with assigned label and notes.
+
+```{r}
+#| label: tbl-appendix
+#| tbl-cap: "All identified CLEA data quality issues"
+
+label_order_full <- c(
+  "clea_sub_error", "clea_data_error",
+  "clea_name_abbrev", "historical_territory", "multi_territory"
+)
+
+validated |>
+  filter(label %in% error_labels) |>
+  distinct(ctr_n, cst_n, label, notes) |>
+  mutate(label = factor(label_labels[label], levels = label_labels)) |>
+  arrange(label, ctr_n, cst_n) |>
+  transmute(
+    Country    = ctr_n,
+    Category   = label,
+    `cst_n`    = cst_n,
+    Notes      = notes
+  ) |>
+  kable()
+```

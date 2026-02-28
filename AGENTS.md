@@ -16,6 +16,8 @@ _data/output/{country}.RData            # Per-country linked results (output of 
 _scripts/001_clean-data.R               # Cleaning script
 _scripts/002_link-data.R                # Fuzzy linkage script
 _scripts/003_validate.R                 # Post-merge validation and flagged-row labelling
+_reports/clea-data-quality.qmd          # Quarto report: all identified CLEA data entry problems
+_reports/clea-data-quality.html         # Rendered HTML output of the above
 ```
 
 ## Data Schemas
@@ -57,7 +59,8 @@ _scripts/003_validate.R                 # Post-merge validation and flagged-row 
 
 - Script 001 completed (`cleaned.RData` exists, regenerated with ISO deduplication fix)
 - Script 002 partially run; completed countries: **Brazil**, **United States**, **Canada**, **Australia**, **Germany**
-- Script 003 run; Brazil, United States, and Canada are fully labelled; Australia (203 flagged rows) and Germany (132 flagged rows) not yet reviewed in `case_labels`
+- Script 003 run; all five countries fully labelled — no unlabelled flagged rows remain
+- Data quality report generated: `_reports/clea-data-quality.qmd` / `.html`
 
 ## Known Data Quality Issues
 
@@ -76,7 +79,13 @@ _scripts/003_validate.R                 # Post-merge validation and flagged-row 
 | Brazil | `guanabara/dto federal`, `guanabara` | `historical_territory` | Guanabara state (1960–1975), merged into Rio de Janeiro |
 | United States | `califronia 40` | `clea_data_error` | Typo: "Califronia" → "California" |
 | United States | `georigia 10` | `clea_data_error` | Typo: "Georigia" → "Georgia" |
+| Australia | 23 named divisions (e.g. barker, boothby, jagajaga, solomon…) | `low_confidence` | Federal division names have no textual similarity to state names; sub field corroborates match |
+| Australia | `cowan`, `swan` | `low_confidence` | No match found; sub=WA determines AU-WA |
+| Australia | `darwin` | `low_confidence` | Division of Darwin was a Tasmanian seat (named after Charles Darwin, not the NT city); sub=tasmania determines AU-TAS |
+| Germany | ~53 constituencies | `clea_sub_error` | Systematic CLEA sub errors for East German Wahlkreise: Thüringen constituencies filed under Sachsen; MV constituencies filed under Brandenburg; Sachsen constituencies filed under Sachsen-Anhalt; etc. **Confined to 2002 and 2005 only** (94 rows); all other election years have correct sub values. Pattern is a 2-way swap (Brandenburg↔MV) plus a 3-way cyclic rotation (actual Sachsen→coded Sachsen-Anhalt→coded Thüringen→coded Sachsen). Six constituencies (Chemnitz, Börde, Burgenland, Harz, Mansfelder Land, Leipziger-Land–Muldentalkreis) were miscoded with high confidence and did not trigger `flag=1`; corrected via `true_iso_code`. |
+| Germany | ~36 constituencies | `low_confidence` | Bundestag Wahlkreis names (numbered, district compound names) and party-list seats have no textual similarity to state names; matches corroborated by sub field |
+| Germany | `münchen-süd` | `clea_sub_error` | sub field contains constituency name itself (not a valid state); Wahlkreis München-Süd is in Bayern (DE-BY). Only 1976 is a true sub error; all other years have sub=Bayern (correct) but label applied consistently. |
 
 ## Required R Packages
 
-`tidyverse`, `fuzzylink`, `here`, `glue`
+`tidyverse`, `fuzzylink`, `here`, `glue`, `knitr` (report rendering)

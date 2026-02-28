@@ -84,6 +84,160 @@ case_labels <- tribble(
   # Typos in CLEA constituency names prevented matching
   "United States", "califronia 40",                               "clea_data_error",     "Typo: 'Califronia' should be 'California'; likely maps to CA-40",                                                 NA_character_,
   "United States", "georigia 10",                                 "clea_data_error",     "Typo: 'Georigia' should be 'Georgia'; likely maps to GA-10",                                                      NA_character_,
+
+  # --- Australia ---
+
+  # Australian federal division names (e.g. Barker, Boothby, Jagajaga) are place
+  # names / surnames with no textual similarity to state names.  The model matched
+  # these correctly to the right state (corroborated by the sub field) but with
+  # very low probability.
+  "Australia", "barker",                                           "low_confidence",      "Division name has no textual similarity to state name; sub=SA corroborates AU-SA",              NA_character_,
+  "Australia", "bean",                                             "low_confidence",      "Division name has no textual similarity to state name; sub=ACT corroborates AU-ACT",             NA_character_,
+  "Australia", "boothby",                                          "low_confidence",      "Division name has no textual similarity to state name; sub=SA corroborates AU-SA",               NA_character_,
+  "Australia", "brand",                                            "low_confidence",      "Division name has no textual similarity to state name; sub=WA corroborates AU-WA",               NA_character_,
+  "Australia", "burt",                                             "low_confidence",      "Division name has no textual similarity to state name; sub=WA corroborates AU-WA",               NA_character_,
+  "Australia", "canning",                                          "low_confidence",      "Division name has no textual similarity to state name; sub=WA corroborates AU-WA",               NA_character_,
+  "Australia", "dunkley",                                          "low_confidence",      "Division name has no textual similarity to state name; sub=VIC corroborates AU-VIC",             NA_character_,
+  "Australia", "forrest",                                          "low_confidence",      "Division name has no textual similarity to state name; sub=WA corroborates AU-WA",               NA_character_,
+  "Australia", "goldstein",                                        "low_confidence",      "Division name has no textual similarity to state name; sub=VIC corroborates AU-VIC",             NA_character_,
+  "Australia", "grey",                                             "low_confidence",      "Division name has no textual similarity to state name; sub=SA corroborates AU-SA",               NA_character_,
+  "Australia", "groom",                                            "low_confidence",      "Division name has no textual similarity to state name; sub=QLD corroborates AU-QLD",             NA_character_,
+  "Australia", "jagajaga",                                         "low_confidence",      "Division name has no textual similarity to state name; sub=VIC corroborates AU-VIC",             NA_character_,
+  "Australia", "kingston",                                         "low_confidence",      "Division name has no textual similarity to state name; sub=SA corroborates AU-SA",               NA_character_,
+  "Australia", "mayo",                                             "low_confidence",      "Division name has no textual similarity to state name; sub=SA corroborates AU-SA",               NA_character_,
+  "Australia", "moncrieff",                                        "low_confidence",      "Division name has no textual similarity to state name; sub=QLD corroborates AU-QLD",             NA_character_,
+  "Australia", "moore",                                            "low_confidence",      "Division name has no textual similarity to state name; sub=WA corroborates AU-WA",               NA_character_,
+  "Australia", "o'connor",                                         "low_confidence",      "Division name has no textual similarity to state name; sub=WA corroborates AU-WA",               NA_character_,
+  "Australia", "pearce",                                           "low_confidence",      "Division name has no textual similarity to state name; sub=WA corroborates AU-WA",               NA_character_,
+  "Australia", "petrie",                                           "low_confidence",      "Division name has no textual similarity to state name; sub=QLD corroborates AU-QLD",             NA_character_,
+  "Australia", "scullin",                                          "low_confidence",      "Division name has no textual similarity to state name; sub=VIC corroborates AU-VIC",             NA_character_,
+  "Australia", "solomon",                                          "low_confidence",      "Division name has no textual similarity to state name; sub=NT corroborates AU-NT",               NA_character_,
+  "Australia", "spence",                                           "low_confidence",      "Division name has no textual similarity to state name; sub=SA corroborates AU-SA",               NA_character_,
+  "Australia", "tangney",                                          "low_confidence",      "Division name has no textual similarity to state name; sub=WA corroborates AU-WA",               NA_character_,
+
+  # No match found; division name has no textual similarity to state name.
+  # true_iso_code determined from the sub field.
+  "Australia", "cowan",                                            "low_confidence",      "No match found; division name has no textual similarity to state name; sub=WA determines AU-WA", "AU-WA",
+  "Australia", "swan",                                             "low_confidence",      "No match found; division name has no textual similarity to state name; sub=WA determines AU-WA", "AU-WA",
+  # The Division of Darwin was a Tasmanian federal seat named after Charles Darwin
+  # (not the NT city); active 1903-1955.
+  "Australia", "darwin",                                           "low_confidence",      "No match found; Division of Darwin was a Tasmanian seat (named after Charles Darwin, not the NT city); sub=tasmania determines AU-TAS", "AU-TAS",
+
+  # --- Germany ---
+
+  # Bundestag state party-list seats (Landeslisten): sub = "Regional Constituency",
+  # cst_n IS the state name. The model matched correctly but with very low
+  # probability, likely because the match block included all 16 German states and
+  # the model gave low confidence to an exact-name match.
+  "Germany", "baden-württemberg",                                  "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "bayern",                                             "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "berlin",                                             "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "brandenburg",                                        "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "bremen",                                             "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "hamburg",                                            "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "hessen",                                             "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "mecklenburg-vorpommern",                             "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "niedersachsen",                                      "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "nordrhein-westfalen",                                "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "saarland",                                           "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "sachsen",                                            "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "sachsen-anhalt",                                     "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "schleswig-holstein",                                 "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+  "Germany", "thüringen",                                          "low_confidence",      "State party-list seat; cst_n is the state name; model matched correctly with low probability",  NA_character_,
+
+  # Named/numbered Bundestag Wahlkreise whose constituency names have no textual
+  # similarity to the enclosing state name; sub field corroborates the match.
+  "Germany", "023: hamburg-bergedorf – harburg",                   "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Hamburg corroborates DE-HH",       NA_character_,
+  "Germany", "060: brandenburg an der havel – potsdam-mittelmark i – havelland iii – teltow-fläming i", "low_confidence", "Wahlkreis name has no textual similarity to state name; sub=Brandenburg corroborates DE-BB", NA_character_,
+  "Germany", "083: berlin-friedrichshain-kreuzberg – prenzlauer berg ost", "low_confidence", "Wahlkreis name has no textual similarity to state name; sub=Berlin corroborates DE-BE",    NA_character_,
+  "Germany", "151: nordsachsen",                                   "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Sachsen corroborates DE-SN",       NA_character_,
+  "Germany", "161: mittelsachsen",                                  "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Sachsen corroborates DE-SN",       NA_character_,
+  "Germany", "213: erding – ebersberg",                            "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Bayern corroborates DE-BY",        NA_character_,
+  "Germany", "224: starnberg – landsberg am lech",                 "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Bayern corroborates DE-BY",        NA_character_,
+  "Germany", "altona (hamburg – altona)",                          "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Hamburg corroborates DE-HH",       NA_character_,
+  "Germany", "bergedorf (hamburg – bergedorf)",                    "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Hamburg corroborates DE-HH",       NA_character_,
+  "Germany", "eimsbüttel (hamburg – eimsbüttel)",                  "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Hamburg corroborates DE-HH",       NA_character_,
+  "Germany", "wandsbeck (hamburg – wandsbeck)",                    "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Hamburg corroborates DE-HH",       NA_character_,
+  "Germany", "ludwigslust- parchim ii - nordwestmecklenburg ii - landkreis rostock i", "low_confidence", "Wahlkreis name has no textual similarity to state name; sub=Land Mecklenburg-Vorpommern corroborates DE-MV", NA_character_,
+  "Germany", "mecklenburgische seenplatte i - vorpommern-greifswald ii", "low_confidence", "Wahlkreis name has no textual similarity to state name; sub=Land Mecklenburg-Vorpommern corroborates DE-MV", NA_character_,
+  "Germany", "mecklenburgische seenplatte ii - landkreis rostock iii", "low_confidence",  "Wahlkreis name has no textual similarity to state name; sub=Land Mecklenburg-Vorpommern corroborates DE-MV", NA_character_,
+  "Germany", "rostock - landkreis rostock ii",                     "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Land Mecklenburg-Vorpommern corroborates DE-MV", NA_character_,
+  "Germany", "schwerin - ludwigslust-parchim i - nordwestmecklenburg i", "low_confidence", "Wahlkreis name has no textual similarity to state name; sub=Land Mecklenburg-Vorpommern corroborates DE-MV", NA_character_,
+  "Germany", "vorpommern- rügen - vorpommern-greifswald i",        "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Land Mecklenburg-Vorpommern corroborates DE-MV", NA_character_,
+  "Germany", "mittelsachsen",                                       "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Sachsen corroborates DE-SN",       NA_character_,
+  "Germany", "weißenburg (in bayern)",                              "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Bayern corroborates DE-BY",        NA_character_,
+  "Germany", "weißenburg in bayern",                                "low_confidence",      "Wahlkreis name has no textual similarity to state name; sub=Bayern corroborates DE-BY",        NA_character_,
+
+  # CLEA `sub` field assigns these constituencies to the wrong German state.
+  # The model correctly identified the right state despite the sub error;
+  # true_iso_code confirms/restores the correct ISO subdivision.
+  "Germany", "bad doberan - güstrow - müritz",                     "clea_sub_error",      "sub=Brandenburg wrong; all three districts are in Mecklenburg-Vorpommern",                     "DE-MV",
+  "Germany", "bernburg - bitterfeld - saalkreis",                   "clea_sub_error",      "sub=Thüringen wrong; Bernburg, Bitterfeld, and Saalkreis are all in Sachsen-Anhalt",           "DE-ST",
+  "Germany", "eichsfeld - nordhausen",                              "clea_sub_error",      "sub=Sachsen wrong; Eichsfeld and Nordhausen are in Thüringen",                                 "DE-TH",
+  "Germany", "eichsfeld - nordhausen - unstrut-hainich-kreis i",   "clea_sub_error",      "sub=Sachsen wrong; Eichsfeld, Nordhausen, and Unstrut-Hainich-Kreis are in Thüringen",        "DE-TH",
+  "Germany", "eisenach - wartburgkreis - unstrut-hainich-kreis i",  "clea_sub_error",      "sub=Sachsen wrong; Eisenach, Wartburgkreis, and Unstrut-Hainich-Kreis are in Thüringen",      "DE-TH",
+  "Germany", "eisenach - wartburgkreis - unstrut-hainich-kreis ii", "clea_sub_error",      "sub=Sachsen wrong; Eisenach, Wartburgkreis, and Unstrut-Hainich-Kreis are in Thüringen",      "DE-TH",
+  "Germany", "elbe-havel-gebiet",                                   "clea_sub_error",      "sub=Thüringen wrong; Elbe-Havel region is in Sachsen-Anhalt",                                  "DE-ST",
+  "Germany", "gera - jena - saale-holzland-kreis",                  "clea_sub_error",      "sub=Sachsen wrong; Gera, Jena, and Saale-Holzland-Kreis are in Thüringen",                    "DE-TH",
+  "Germany", "gera - saale-holzland-kreis",                         "clea_sub_error",      "sub=Sachsen wrong; Gera and Saale-Holzland-Kreis are in Thüringen",                           "DE-TH",
+  "Germany", "gotha - ilm-kreis",                                   "clea_sub_error",      "sub=Sachsen wrong; Gotha and Ilm-Kreis are in Thüringen",                                     "DE-TH",
+  "Germany", "greifswald - demmin - ostvorpommern",                 "clea_sub_error",      "sub=Brandenburg wrong; Greifswald, Demmin, and Ostvorpommern are in Mecklenburg-Vorpommern",  "DE-MV",
+  "Germany", "greiz - altenburger land",                            "clea_sub_error",      "sub=Sachsen wrong; Greiz and Altenburger Land are in Thüringen",                              "DE-TH",
+  "Germany", "halle",                                               "clea_sub_error",      "sub=Thüringen wrong; Halle (Saale) is the capital of Sachsen-Anhalt",                         "DE-ST",
+  "Germany", "jena - weimar - weimarer land",                       "clea_sub_error",      "sub=Sachsen wrong; Jena, Weimar, and Weimarer Land are in Thüringen",                         "DE-TH",
+  "Germany", "neubrandenburg - mecklenburg-strelitz - uecker-randow", "clea_sub_error",    "sub=Brandenburg wrong; all three districts are in Mecklenburg-Vorpommern",                     "DE-MV",
+  "Germany", "schwerin - ludwigslust",                              "clea_sub_error",      "sub=Brandenburg wrong; Schwerin and Ludwigslust are in Mecklenburg-Vorpommern",                "DE-MV",
+  "Germany", "sonneberg - saalfeld-rudolstadt - saale-orla-kreis",  "clea_sub_error",      "sub=Sachsen wrong; Sonneberg, Saalfeld-Rudolstadt, and Saale-Orla-Kreis are in Thüringen",    "DE-TH",
+  "Germany", "stralsund - nordvorpommern - rügen",                  "clea_sub_error",      "sub=Brandenburg wrong; Stralsund, Nordvorpommern, and Rügen are in Mecklenburg-Vorpommern",   "DE-MV",
+  "Germany", "wismar - nordwestmecklenburg - parchim",              "clea_sub_error",      "sub=Brandenburg wrong; Wismar, Nordwestmecklenburg, and Parchim are in Mecklenburg-Vorpommern","DE-MV",
+
+  # CLEA `sub` field assigns these constituencies to the wrong German state AND
+  # no match was found. true_iso_code supplies the correct subdivision.
+  "Germany", "altmark",                                             "clea_sub_error",      "sub=Thüringen wrong; Altmark is a historical region in Sachsen-Anhalt",                       "DE-ST",
+  "Germany", "annaberg - aue-schwarzenberg",                        "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Annaberg and Aue-Schwarzenberg are in Sachsen",                     "DE-SN",
+  "Germany", "bautzen - weißwasser",                                "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Bautzen and Weißwasser are in Sachsen",                             "DE-SN",
+  "Germany", "brandenburg an der havel - potsdam-mittelmark i - havelland iii - teltow-fläming i", "clea_sub_error", "sub=Mecklenburg-Vorpommern wrong; all districts are in Brandenburg", "DE-BB",
+  "Germany", "chemnitzer land - stollberg",                         "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Chemnitzer Land and Stollberg are in Sachsen",                      "DE-SN",
+  "Germany", "cottbus - spree-neiße",                               "clea_sub_error",      "sub=Mecklenburg-Vorpommern wrong; Cottbus and Spree-Neiße are in Brandenburg",                "DE-BB",
+  "Germany", "dahme-spreewald - teltow-fläming iii - oberspreewald-lausitz i", "clea_sub_error", "sub=Mecklenburg-Vorpommern wrong; all districts are in Brandenburg",                    "DE-BB",
+  "Germany", "delitzsch - torgau-oschatz - riesa",                  "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Delitzsch, Torgau-Oschatz, and Riesa are in Sachsen",               "DE-SN",
+  "Germany", "dresden i",                                           "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Dresden is in Sachsen",                                             "DE-SN",
+  "Germany", "dresden ii - meißen i",                               "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Dresden and Meißen are in Sachsen",                                 "DE-SN",
+  "Germany", "döbeln - mittweida - meißen ii",                      "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Döbeln, Mittweida, and Meißen are in Sachsen",                      "DE-SN",
+  "Germany", "elbe-elster - oberspreewald-lausitz ii",              "clea_sub_error",      "sub=Mecklenburg-Vorpommern wrong; Elbe-Elster and Oberspreewald-Lausitz are in Brandenburg",  "DE-BB",
+  "Germany", "erfurt",                                              "clea_sub_error",      "sub=Sachsen wrong; Erfurt is in Thüringen",                                                   "DE-TH",
+  "Germany", "erfurt - weimar - weimarer land ii",                  "clea_sub_error",      "sub=Sachsen wrong; Erfurt, Weimar, and Weimarer Land are in Thüringen",                       "DE-TH",
+  "Germany", "frankfurt (oder) - oder-spree",                       "clea_sub_error",      "sub=Mecklenburg-Vorpommern wrong; Frankfurt (Oder) and Oder-Spree are in Brandenburg",        "DE-BB",
+  "Germany", "freiberg - mittlerer erzgebirgskreis",                "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Freiberg and Mittlerer Erzgebirgskreis are in Sachsen",             "DE-SN",
+  "Germany", "kyffhäuserkreis - sömmerda - unstrut-hainich-kreis ii","clea_sub_error",     "sub=Sachsen wrong; Kyffhäuserkreis, Sömmerda, and Unstrut-Hainich-Kreis are in Thüringen",   "DE-TH",
+  "Germany", "kyffhäuserkreis - sömmerda - weimarer land i",        "clea_sub_error",      "sub=Sachsen wrong; Kyffhäuserkreis, Sömmerda, and Weimarer Land are in Thüringen",            "DE-TH",
+  "Germany", "leipzig i",                                           "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Leipzig is in Sachsen",                                             "DE-SN",
+  "Germany", "leipzig ii",                                          "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Leipzig is in Sachsen",                                             "DE-SN",
+  "Germany", "leipziger land - muldentalkreis",                     "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Leipziger Land and Muldentalkreis are in Sachsen",                  "DE-SN",
+  "Germany", "löbau-zittau - görlitz - niesky",                     "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Löbau-Zittau, Görlitz, and Niesky are in Sachsen",                  "DE-SN",
+  "Germany", "magdeburg",                                           "clea_sub_error",      "sub=Thüringen wrong; Magdeburg is the capital of Sachsen-Anhalt",                             "DE-ST",
+  "Germany", "märkisch-oderland - barnim ii",                       "clea_sub_error",      "sub=Mecklenburg-Vorpommern wrong; Märkisch-Oderland and Barnim are in Brandenburg",           "DE-BB",
+  "Germany", "münchen-süd",                                         "clea_sub_error",      "sub=München-Süd (constituency name used as sub); Wahlkreis München-Süd is in Bayern",         "DE-BY",
+  "Germany", "oberhavel - havelland ii",                            "clea_sub_error",      "sub=Mecklenburg-Vorpommern wrong; Oberhavel and Havelland are in Brandenburg",                "DE-BB",
+  "Germany", "potsdam - potsdam-mittelmark ii - teltow-fläming ii", "clea_sub_error",      "sub=Mecklenburg-Vorpommern wrong; Potsdam and surrounding districts are in Brandenburg",      "DE-BB",
+  "Germany", "prignitz - ostprignitz-ruppin - havelland i",         "clea_sub_error",      "sub=Mecklenburg-Vorpommern wrong; Prignitz, Ostprignitz-Ruppin, and Havelland are in Brandenburg", "DE-BB",
+  "Germany", "rostock",                                             "clea_sub_error",      "sub=Brandenburg wrong; Rostock is in Mecklenburg-Vorpommern",                                 "DE-MV",
+  "Germany", "suhl - schmalkalden-meiningen - hildburghausen",      "clea_sub_error",      "sub=Sachsen wrong; Suhl, Schmalkalden-Meiningen, and Hildburghausen are in Thüringen",        "DE-TH",
+  "Germany", "sächsische schweiz - weißeritzkreis",                 "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Sächsische Schweiz and Weißeritzkreis are in Sachsen",              "DE-SN",
+  "Germany", "uckermark - barnim i",                                "clea_sub_error",      "sub=Mecklenburg-Vorpommern wrong; Uckermark and Barnim are in Brandenburg",                   "DE-BB",
+  "Germany", "vogtland - plauen",                                   "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Vogtland and Plauen are in Sachsen",                                "DE-SN",
+  "Germany", "zwickauer land - zwickau",                            "clea_sub_error",      "sub=Sachsen-Anhalt wrong; Zwickauer Land and Zwickau are in Sachsen",                         "DE-SN",
+
+  # These six constituencies were NOT flagged in 2002/2005 because the model matched
+  # with high confidence — but it was anchored by the wrong state name embedded in
+  # the A string (constituency = sub + cst_n).  The sub rotation error caused the
+  # model to match to the rotated-wrong state rather than the true state.
+  "Germany", "chemnitz",                                            "clea_sub_error",      "sub=Sachsen-Anhalt wrong (2002/2005 rotation error); Chemnitz is in Sachsen",                 "DE-SN",
+  "Germany", "leipziger-land - muldentalkreis",                     "clea_sub_error",      "sub=Sachsen-Anhalt wrong (2002/2005 rotation error); Leipziger Land and Muldentalkreis are in Sachsen", "DE-SN",
+  "Germany", "harz",                                                "clea_sub_error",      "sub=Thüringen wrong (2002/2005 rotation error); Landkreis Harz is in Sachsen-Anhalt",          "DE-ST",
+  "Germany", "börde",                                               "clea_sub_error",      "sub=Thüringen wrong (2002/2005 rotation error); Börde is in Sachsen-Anhalt",                   "DE-ST",
+  "Germany", "burgenland",                                          "clea_sub_error",      "sub=Thüringen wrong (2002/2005 rotation error); Burgenlandkreis is in Sachsen-Anhalt",         "DE-ST",
+  "Germany", "mansfelder land",                                     "clea_sub_error",      "sub=Thüringen wrong (2002/2005 rotation error); Mansfelder Land is in Sachsen-Anhalt",         "DE-ST",
 )
 
 

@@ -26,16 +26,26 @@ _reports/clea-data-quality.html         # Rendered HTML output of the above
 
 **CLEA** (after cleaning): `release`, `id`, `rg`, `ctr_n`, `ctr`, `yr`, `mn`, `sub`, `cst_n`, `constituency`
 - Filtered to `yr >= 1945`
-- `constituency` field constructed by combining `sub` and `cst_n` (handles "-9" edge case)
+- `constituency` field is `cst_n` only, except Bolivia-style cases where `cst_n` is purely
+  numeric and `sub` is a place name (detected via `str_detect(str_trim(cst_n), '^\\d+$') &
+  !str_detect(str_trim(sub), '^-?\\d+$')`), in which case `constituency = glue('{sub} - {cst_n}')`
 
 **ISO.csv**: `ctr_n`, `Subdivision.category`, `ISO3166_2.code`, `star`, `Subdivision.name`, `Local.variant`, `Language.code`, `Romanization.system`, `Parent.subdivision`, `Country_code`, `Constituent_code`
 - 6,285 records; read with `encoding = "latin1"`
 - `constituency` field derived from `Subdivision.name`
-- ISO provides multiple language variants per subdivision for 58 countries; script 001 deduplicates by `ISO3166_2.code`, preferring `Language.code == "en"`, falling back to the first available row
+- ISO provides multiple language variants per subdivision for 58 countries; script 001 deduplicates
+  by `ISO3166_2.code`, preferring `Language.code == "en"`, falling back to the first available row
+- **Known encoding issue**: 582 entries across 46 countries have literal `?` characters replacing
+  diacritics (e.g. "Bih?r", "Karn?taka", "Gujar?t"). This is unrecoverable via re-encoding —
+  the characters are lost in the source file. Affected entries fail Stage 1 string matching and
+  fall through to fuzzylink. Countries most affected: Azerbaijan (54), Viet Nam (43), Slovenia (31),
+  Czech Republic (30), Afghanistan (28), Iran (28), Lithuania (28), India (19).
 
-**Output per country (`df`)**: linked records with match probabilities and flags
-- `flag = 1` if multiple matches, no match (`B` is NA), or match probability < 0.2
-- Note: countries processed before the ISO deduplication fix (pre-2026-02-27) may have `ctr_n` as a plain column; Canada (processed after the fix) has `ctr_n.x`/`ctr_n.y` — script 003 normalises this
+**Output per country (`df`)**: linked records combining Stage 1 and Stage 2 results
+- Stage 1 rows: `A = sub`, `B = Subdivision.name`, `match_probability = 1`, `flag = 0`
+- Stage 2 rows: `A = constituency` (cst_n), `B = Subdivision.name`, `match_probability` from
+  fuzzylink, `flag = 1` if multiple matches, no match, or match_probability < 0.2
+- fuzzylink may produce `ctr_n.x`/`ctr_n.y`; script 003 normalises to `ctr_n`
 
 **validated** (`_data/temp/validated.RData`): all per-country outputs combined, with `label` and `notes` columns added to flagged rows
 - Labels: `clea_sub_error`, `clea_name_abbrev`, `clea_data_error`, `historical_territory`, `multi_territory`, `low_confidence`
@@ -51,7 +61,9 @@ _reports/clea-data-quality.html         # Rendered HTML output of the above
      `cst_n` is purely numeric and `sub` is a place name
 2. Run `_scripts/002_string-match.R` → produces `_data/temp/stage1.RData`
    - Normalises CLEA `sub` and ISO `Subdivision.name` (diacritics stripped, lowercased)
-   - Left-joins on `(ctr_n, sub_norm)` to assign ISO codes directly for matching rows
+   - Pass 1: left-joins on `(ctr_n, sub_norm)` for exact normalised matches
+   - Pass 2: contains-match for unmatched rows — accepts if sub_norm is a substring of
+     an ISO name (or vice versa) and the match is unique within the country
    - Saves `stage1_matched` and `stage2_input`
 3. Run `_scripts/003_fuzzy-link.R` → produces `_data/output/{country}.RData` per country
    - Loads `cleaned.RData` and `stage1.RData`
@@ -72,13 +84,41 @@ _reports/clea-data-quality.html         # Rendered HTML output of the above
 
 - Pipeline redesigned: scripts renumbered 001–004; Stage 1 string-match split from fuzzy-link stage
 - Script 001 regenerated: sub-field typo corrections added; `constituency` no longer embeds `sub`
-- Script 002 (string-match) written; Stage 1 resolves ~67k rows across 79 countries
+- Script 002 (string-match) written; Stage 1 resolves ~86k rows across 87 countries
+  (Pass 1 exact: ~67k; Pass 2 contains-match: ~19k additional)
 - Script 003 (fuzzy-link) written; not yet re-run under new design
 - Script 004 (validate) updated from former 003; not yet re-run under new design
 - Existing per-country output files (Brazil, US, Canada, Australia, Germany) are stale — produced under the old pipeline and should be regenerated
 - Data quality report updated (2026-03-02): added §Sub field typos documenting 5 new corrections
 
+## Stage 2 Composition (as of last 002 run)
+
+- **85,970 rows matched in Stage 1** across 87 countries
+- **58,316 rows in Stage 2** across 183 countries
+  - 62% sentinel subs (`-9`, `-990` etc.) — no subdivision recorded in CLEA
+  - 38% unmatched sub values (naming mismatches, abbreviations, different geographic levels)
+- **7 countries fully resolved by Stage 1** (no fuzzylink needed):
+  Canada, Eswatini, Gabon, Micronesia, Togo, United States, Zimbabwe
+- **Largest Stage 2 countries**: Japan (4,431 rows — uses regional blocks, not ISO prefectures),
+  India (4,267 — ISO encoding issues + historical state names), UK (4,101 — ambiguous region
+  strings), New Zealand/Greece/Bangladesh/Turkey/Sri Lanka (1,000–2,000 each — all sentinels)
+- Japan uses 8 regional blocks (Kinki, Kyushu, Tokai, etc.) in `sub`; ISO codes at prefecture
+  level — no string-match path exists, fuzzylink required
+- Italy is 99% sentinel subs; not addressable via Stage 1 extension
+
 ## Known Data Quality Issues
+
+### Sub field typos (corrected in script 001)
+
+| Country | Erroneous `sub` | Correct value | Notes |
+|---|---|---|---|
+| Austria | `Wine` | `Wien` | Affects all Wien constituencies across all election years |
+| Liberia | `Rivercress` | `River Cess` | ISO LR-RI is "River Cess" |
+| Thailand | `Bankgok` | `Bangkok` | Typo; "Bangkok" also appears correctly in other years |
+| Uganda | `LYAlliance for National Transformation` | `LYANTONDE` | Party name concatenated into sub field; KABULA constituency, 2021 only |
+| Zimbabwe | `Masonaland West` | `Mashonaland West` | Missing "h"; ISO ZW-MW is "Mashonaland West" |
+
+### Sub field errors — wrong province/region (corrected in script 004 via `case_labels`)
 
 | Country | `cst_n` (lower) | Label | Notes |
 |---|---|---|---|
@@ -104,4 +144,4 @@ _reports/clea-data-quality.html         # Rendered HTML output of the above
 
 ## Required R Packages
 
-`tidyverse`, `fuzzylink`, `here`, `glue`, `knitr` (report rendering)
+`tidyverse`, `fuzzylink`, `here`, `glue`, `stringi`, `knitr` (report rendering)

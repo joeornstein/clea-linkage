@@ -2,7 +2,7 @@
 ---
 title: "CLEA Data Quality: Identified Data Entry Issues"
 subtitle: "Five-country review — Brazil, Canada, Germany, Australia (partial), United States"
-date: "2026-02-28"
+date: "2026-03-02"
 format:
   html:
     toc: true
@@ -35,6 +35,8 @@ load(here("_data", "temp", "validated.RData"))
 ## Introduction
 
 This report documents data entry problems identified in the Constituency-Level Elections Archive (CLEA) during a fuzzy-linkage project that assigns ISO 3166-2 subdivision codes to CLEA constituencies. The linkage was performed for five countries using the `fuzzylink` package; post-merge validation of every flagged observation then surfaced the issues described below.
+
+The issues are grouped into three categories. An additional systematic comparison of all CLEA `sub` values against ISO 3166-2 subdivision names identified five further sub-field typos (Austria, Liberia, Thailand, Uganda, Zimbabwe); these are documented in @sec-other-sub and corrected upstream in the cleaning script rather than in the validated dataset.
 
 The issues are grouped into three categories:
 
@@ -267,6 +269,26 @@ validated |>
     `Notes`          = notes
   ) |>
   kable()
+```
+
+### Other countries: Sub field typos {#sec-other-sub}
+
+A systematic comparison of all CLEA `sub` values against ISO 3166-2 subdivision names identified five additional countries where the `sub` field contains an invalid or garbled string. Unlike the Germany and Canada errors above — where `sub` names a *valid* subdivision but the *wrong* one for that constituency — these cases involve values that do not correspond to any ISO subdivision at all.
+
+All five are corrected in `001_clean-data.R` before linking.
+
+```{r}
+#| label: tbl-sub-typos
+#| tbl-cap: "Sub field string errors identified by systematic scan"
+
+tribble(
+  ~Country,  ~`Erroneous sub`,                          ~`Correct value`,   ~Notes,
+  "Austria",  "Wine",                                    "Wien",             "Typo; affects all Wien constituencies across all election years",
+  "Liberia",  "Rivercress",                              "River Cess",       "Misspelling; ISO LR-RI is 'River Cess'",
+  "Thailand", "Bankgok",                                 "Bangkok",          "Typo; 'Bangkok' also appears correctly in other years",
+  "Uganda",   "LYAlliance for National Transformation",  "LYANTONDE",        "Party-name text concatenated into sub field; affects the KABULA constituency in 2021 only",
+  "Zimbabwe", "Masonaland West",                         "Mashonaland West", "Missing 'h'; ISO ZW-MW is 'Mashonaland West'"
+) |> kable()
 ```
 
 ---

@@ -11,11 +11,13 @@ Link the Constituency-Level Elections Archive (CLEA) with ISO 3166-2 subdivision
 _data/raw/clea/clea_lc_20251015.RData   # Raw CLEA dataset (33 MB)
 _data/raw/ISO.csv                        # ISO 3166-2 subdivision codes (latin1 encoding)
 _data/temp/cleaned.RData                 # Cleaned CLEA + ISO data (output of script 001)
-_data/temp/validated.RData              # Combined + labelled output across all countries (output of script 003)
-_data/output/{country}.RData            # Per-country linked results (output of script 002)
+_data/temp/stage1.RData                 # Stage 1 string-match results (output of script 002)
+_data/temp/validated.RData              # Combined + labelled output across all countries (output of script 004)
+_data/output/{country}.RData            # Per-country linked results (output of script 003)
 _scripts/001_clean-data.R               # Cleaning script
-_scripts/002_link-data.R                # Fuzzy linkage script
-_scripts/003_validate.R                 # Post-merge validation and flagged-row labelling
+_scripts/002_string-match.R             # Stage 1: ISO code assignment via sub field string matching
+_scripts/003_fuzzy-link.R               # Stage 2: LLM-assisted fuzzy linkage for unmatched rows
+_scripts/004_validate.R                 # Post-merge validation and flagged-row labelling
 _reports/clea-data-quality.qmd          # Quarto report: all identified CLEA data entry problems
 _reports/clea-data-quality.html         # Rendered HTML output of the above
 ```
@@ -42,11 +44,22 @@ _reports/clea-data-quality.html         # Rendered HTML output of the above
 ## Processing Pipeline
 
 1. Run `_scripts/001_clean-data.R` → produces `_data/temp/cleaned.RData`
-2. Run `_scripts/002_link-data.R` → produces `_data/output/{country}.RData` per country
+   - Corrects known `sub` field typos (Austria "Wine"→"Wien", Thailand "Bankgok"→"Bangkok",
+     Zimbabwe "Masonaland West"→"Mashonaland West", Liberia "Rivercress"→"River Cess",
+     Uganda 2021 KABULA concatenation error)
+   - `constituency` field is `cst_n` only (not sub+cst_n), except Bolivia-style cases where
+     `cst_n` is purely numeric and `sub` is a place name
+2. Run `_scripts/002_string-match.R` → produces `_data/temp/stage1.RData`
+   - Normalises CLEA `sub` and ISO `Subdivision.name` (diacritics stripped, lowercased)
+   - Left-joins on `(ctr_n, sub_norm)` to assign ISO codes directly for matching rows
+   - Saves `stage1_matched` and `stage2_input`
+3. Run `_scripts/003_fuzzy-link.R` → produces `_data/output/{country}.RData` per country
+   - Loads `cleaned.RData` and `stage1.RData`
    - Defines `link_countries(countries, overwrite = FALSE)`
    - Call `link_countries(unique(clea$ctr_n))` to process all; skips existing output unless `overwrite = TRUE`
-   - Uses `fuzzylink()` with `model = "gpt-5.2"`
-3. Run `_scripts/003_validate.R` → produces `_data/temp/validated.RData`
+   - Uses `fuzzylink()` with `model = "gpt-5.2"` for rows in `stage2_input`
+   - Combines Stage 1 matches with fuzzylink output and saves per country
+4. Run `_scripts/004_validate.R` → produces `_data/temp/validated.RData`
    - Loads `cleaned.RData` (for `iso` object used in ISO field correction)
    - Loads and combines all per-country output files
    - Joins `case_labels` lookup table (keyed on `ctr_n` + `str_to_lower(cst_n)`) onto all rows
@@ -55,12 +68,15 @@ _reports/clea-data-quality.html         # Rendered HTML output of the above
    - Prints a summary and lists any unlabeled flagged rows
    - Extend `case_labels` as new countries are processed
 
-## Current Status (as of 2026-02-28)
+## Current Status (as of 2026-03-02)
 
-- Script 001 completed (`cleaned.RData` exists, regenerated with ISO deduplication fix)
-- Script 002 partially run; completed countries: **Brazil**, **United States**, **Canada**, **Australia**, **Germany**
-- Script 003 run; all five countries fully labelled — no unlabelled flagged rows remain
-- Data quality report generated: `_reports/clea-data-quality.qmd` / `.html`
+- Pipeline redesigned: scripts renumbered 001–004; Stage 1 string-match split from fuzzy-link stage
+- Script 001 regenerated: sub-field typo corrections added; `constituency` no longer embeds `sub`
+- Script 002 (string-match) written; Stage 1 resolves ~67k rows across 79 countries
+- Script 003 (fuzzy-link) written; not yet re-run under new design
+- Script 004 (validate) updated from former 003; not yet re-run under new design
+- Existing per-country output files (Brazil, US, Canada, Australia, Germany) are stale — produced under the old pipeline and should be regenerated
+- Data quality report updated (2026-03-02): added §Sub field typos documenting 5 new corrections
 
 ## Known Data Quality Issues
 
